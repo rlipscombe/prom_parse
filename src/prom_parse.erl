@@ -50,6 +50,8 @@ parse_labels_1(<<Ch, Rest/binary>>, Name, Labels) when
     (Ch >= $a andalso Ch =< $z) orelse (Ch >= $A andalso Ch =< $Z) orelse Ch == $_
 ->
     parse_labels_2(Rest, [Ch], Name, Labels);
+parse_labels_1(<<",", Rest/binary>>, Name, Labels) ->
+    parse_labels_1(Rest, Name, Labels);
 parse_labels_1(<<"}", Rest/binary>>, Name, Labels) ->
     parse_value(Rest, Name, Labels).
 
