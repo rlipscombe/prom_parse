@@ -49,3 +49,19 @@ multiple_label_commas_test() ->
             <<"foo {bar=\"baz_1,baz_2\",quux=\"wurdle\",gargle=\"blaarg\",mingo=\"zonko\"} 3">>
         )
     ).
+
+value_is_float_test() ->
+    ?assertEqual(
+        {<<"tau">>, #{}, 6.28318530718},
+        prom_parse:line(
+            <<"tau 6.28318530718">>
+        )
+    ).
+
+value_is_float_exp_test() ->
+    ?assertEqual(
+        {<<"metric_name">>, #{}, 1.1048896897050605e-4},
+        prom_parse:line(
+            <<"metric_name 1.10488968970506049126e-04">>
+        )
+    ).

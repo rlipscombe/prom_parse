@@ -74,12 +74,12 @@ parse_label_value(<<Ch, Rest/binary>>, Value, Label, Name, Labels) ->
 parse_value(<<" ", Rest/binary>>, Name, Labels) ->
     parse_value(Rest, Name, Labels);
 parse_value(Rest, Name, Labels) ->
-    {Name, Labels, binary_to_integer(Rest)}.
+    {Name, Labels, binary_to_number(Rest)}.
 
-% parse_value(Value) ->
-%     try
-%         binary_to_float(Value)
-%     catch
-%         error:badarg ->
-%             binary_to_integer(Value)
-%     end.
+binary_to_number(Value) ->
+    try
+        binary_to_float(Value)
+    catch
+        error:badarg ->
+            binary_to_integer(Value)
+    end.
