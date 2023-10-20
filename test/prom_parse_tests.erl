@@ -34,4 +34,18 @@ multiple_label_test() ->
         )
     ).
 
-% TODO: Labels where the values contain commas, motivating the hand-written parser, rather than regexes/split.
+multiple_label_commas_test() ->
+    % Labels where the values contain commas, motivating the hand-written parser, rather than regexes/split.
+    ?assertEqual(
+        {<<"foo">>,
+            #{
+                <<"bar">> => <<"baz_1,baz_2">>,
+                <<"gargle">> => <<"blaarg">>,
+                <<"mingo">> => <<"zonko">>,
+                <<"quux">> => <<"wurdle">>
+            },
+            3},
+        prom_parse:line(
+            <<"foo {bar=\"baz_1,baz_2\",quux=\"wurdle\",gargle=\"blaarg\",mingo=\"zonko\"} 3">>
+        )
+    ).
