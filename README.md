@@ -1,9 +1,3 @@
-prom_parse
-=====
+# prom_parse
 
-An OTP library
-
-Build
------
-
-    $ rebar3 compile
+I needed a quick-and-dirty Erlang library for parsing Prometheus text format. This is it.
