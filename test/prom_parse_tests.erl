@@ -76,13 +76,13 @@ escaping_in_label_values_test() ->
     ?assertEqual(
         {<<"msdos_file_access_time_seconds">>,
             #{
-                <<"error">> => <<"Cannot find file:n\"FILE.TXT\"">>,
+                <<"error">> => <<"Cannot find file:\\n\"FILE.TXT\"">>,
                 <<"path">> => <<"C:\\DIR\\FILE.TXT">>
             },
             1458255915.0},
         prom_parse:line(
             % Yay! Extra escaping.
-            <<"msdos_file_access_time_seconds{path=\"C:\\\\DIR\\\\FILE.TXT\",error=\"Cannot find file:\\n\\\"FILE.TXT\\\"\"} 1.458255915e9">>
+            <<"msdos_file_access_time_seconds{path=\"C:\\\\DIR\\\\FILE.TXT\",error=\"Cannot find file:\\\\n\\\"FILE.TXT\\\"\"} 1.458255915e9">>
         )
     ).
 
