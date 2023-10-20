@@ -65,3 +65,34 @@ value_is_float_exp_test() ->
             <<"metric_name 1.10488968970506049126e-04">>
         )
     ).
+
+with_timestamp_test() ->
+    ?assertEqual(
+        {<<"http_requests_total">>, #{<<"code">> => <<"200">>, <<"method">> => <<"post">>}, 1027},
+        prom_parse:line(<<"http_requests_total{method=\"post\",code=\"200\"} 1027 1395066363000">>)
+    ).
+
+escaping_in_label_values_test() ->
+    ?assertEqual(
+        {<<"msdos_file_access_time_seconds">>,
+            #{
+                <<"error">> => <<"Cannot find file:n\"FILE.TXT\"">>,
+                <<"path">> => <<"C:\\DIR\\FILE.TXT">>
+            },
+            1458255915.0},
+        prom_parse:line(
+            % Yay! Extra escaping.
+            <<"msdos_file_access_time_seconds{path=\"C:\\\\DIR\\\\FILE.TXT\",error=\"Cannot find file:\\n\\\"FILE.TXT\\\"\"} 1.458255915e9">>
+        )
+    ).
+
+something_weird_test() ->
+    ?assertEqual(
+        {<<"something_weird">>, #{<<"problem">> => <<"division by zero">>}, <<"+Inf">>},
+        prom_parse:line(<<"something_weird{problem=\"division by zero\"} +Inf -3982045">>)
+    ).
+
+example_test() ->
+    {ok, Bytes} = file:read_file("test/example.txt"),
+    % Not gonna bother to assert the content (too long); just make sure we don't crash horribly.
+    ?assertMatch(_, prom_parse:string(Bytes)).

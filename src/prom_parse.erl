@@ -68,18 +68,30 @@ parse_labels_3(<<$", Rest/binary>>, Label, Name, Labels) ->
 
 parse_label_value(<<$", Rest/binary>>, Value, Label, Name, Labels) ->
     parse_labels_1(Rest, Name, Labels#{Label => list_to_binary(lists:reverse(Value))});
+parse_label_value(<<"\\", Ch, Rest/binary>>, Value, Label, Name, Labels) ->
+    parse_label_value(Rest, [Ch | Value], Label, Name, Labels);
 parse_label_value(<<Ch, Rest/binary>>, Value, Label, Name, Labels) ->
     parse_label_value(Rest, [Ch | Value], Label, Name, Labels).
 
 parse_value(<<" ", Rest/binary>>, Name, Labels) ->
     parse_value(Rest, Name, Labels);
 parse_value(Rest, Name, Labels) ->
-    {Name, Labels, binary_to_number(Rest)}.
+    case string:split(Rest, " ") of
+        [Value] ->
+            {Name, Labels, binary_to_number(Value)};
+        [Value, _TS] ->
+            {Name, Labels, binary_to_number(Value)}
+    end.
 
 binary_to_number(Value) ->
     try
         binary_to_float(Value)
     catch
         error:badarg ->
-            binary_to_integer(Value)
+            try
+                binary_to_integer(Value)
+            catch
+                error:badarg ->
+                    Value
+            end
     end.
