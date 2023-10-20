@@ -21,30 +21,63 @@ parse_line(Line) ->
     {true, do_parse_line(Line)}.
 
 do_parse_line(Line) ->
-    [Name, Rest] = string:split(Line, " "),
-    parse_rest(Name, Rest).
+    parse_name(Line).
 
-% Yes, I should probably write a proper parser using leex, etc., but it's not worth the effort.
-parse_rest(Name, <<"{", Rest/binary>>) ->
-    [Labels, Value] = string:split(Rest, "}"),
-    {Name, parse_labels(Labels), parse_value(string:trim(Value))};
-parse_rest(Name, Value) ->
-    {Name, #{}, parse_value(Value)}.
+parse_name(<<Ch, Rest/binary>>) when
+    (Ch >= $a andalso Ch =< $z) orelse (Ch >= $A andalso Ch =< $Z) orelse Ch == $_ orelse Ch == $:
+->
+    parse_name_1(Rest, [Ch]).
 
-parse_labels(Labels) ->
-    lists:foldl(
-        fun(Label, Acc) ->
-            [Key, Value] = string:split(Label, "="),
-            Acc#{Key => string:trim(Value, both, [$"])}
-        end,
-        #{},
-        string:split(Labels, ",", all)
-    ).
+parse_name_1(<<Ch, Rest/binary>>, Name) when
+    (Ch >= $a andalso Ch =< $z) orelse (Ch >= $A andalso Ch =< $Z) orelse
+        (Ch >= $0 andalso Ch =< $9) orelse Ch == $_ orelse Ch == $:
+->
+    parse_name_1(Rest, [Ch | Name]);
+parse_name_1(Rest, Name) ->
+    parse_name_2(Rest, list_to_binary(lists:reverse(Name))).
 
-parse_value(Value) ->
-    try
-        binary_to_float(Value)
-    catch
-        error:badarg ->
-            binary_to_integer(Value)
-    end.
+parse_name_2(<<" ", Rest/binary>>, Name) ->
+    parse_name_2(Rest, Name);
+parse_name_2(Rest, Name) ->
+    parse_labels(Rest, Name, #{}).
+
+parse_labels(<<"{", Rest/binary>>, Name, Labels) ->
+    parse_labels_1(Rest, Name, Labels);
+parse_labels(Rest, Name, Labels) ->
+    parse_value(Rest, Name, Labels).
+
+parse_labels_1(<<Ch, Rest/binary>>, Name, Labels) when
+    (Ch >= $a andalso Ch =< $z) orelse (Ch >= $A andalso Ch =< $Z) orelse Ch == $_
+->
+    parse_labels_2(Rest, [Ch], Name, Labels);
+parse_labels_1(<<"}", Rest/binary>>, Name, Labels) ->
+    parse_value(Rest, Name, Labels).
+
+parse_labels_2(<<Ch, Rest/binary>>, Label, Name, Labels) when
+    (Ch >= $a andalso Ch =< $z) orelse (Ch >= $A andalso Ch =< $Z) orelse
+        (Ch >= $0 andalso Ch =< $9) orelse Ch == $_
+->
+    parse_labels_2(Rest, [Ch | Label], Name, Labels);
+parse_labels_2(<<"=", Rest/binary>>, Label, Name, Labels) ->
+    parse_labels_3(Rest, list_to_binary(lists:reverse(Label)), Name, Labels).
+
+parse_labels_3(<<$", Rest/binary>>, Label, Name, Labels) ->
+    parse_label_value(Rest, [], Label, Name, Labels).
+
+parse_label_value(<<$", Rest/binary>>, Value, Label, Name, Labels) ->
+    parse_labels_1(Rest, Name, Labels#{Label => list_to_binary(lists:reverse(Value))});
+parse_label_value(<<Ch, Rest/binary>>, Value, Label, Name, Labels) ->
+    parse_label_value(Rest, [Ch | Value], Label, Name, Labels).
+
+parse_value(<<" ", Rest/binary>>, Name, Labels) ->
+    parse_value(Rest, Name, Labels);
+parse_value(Rest, Name, Labels) ->
+    {Name, Labels, binary_to_integer(Rest)}.
+
+% parse_value(Value) ->
+%     try
+%         binary_to_float(Value)
+%     catch
+%         error:badarg ->
+%             binary_to_integer(Value)
+%     end.
